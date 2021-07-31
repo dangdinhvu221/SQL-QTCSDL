@@ -1,0 +1,181 @@
+﻿USE QLDA;
+
+DECLARE @cDai FLOAT,
+        @cRong FLOAT,
+        @DienTich FLOAT,
+        @ChuVi FLOAT;
+
+SET @cDai = 5;
+SET @cRong = 8;
+
+SET @DienTich = @cDai * @cRong;
+SET @ChuVi = (@cDai + @cRong) * 2;
+
+SELECT N'Diện Tích = ' + CAST(@DienTich AS VARCHAR);
+SELECT N'Chu Vi = ' + CAST(@ChuVi AS VARCHAR);
+
+--- Bài 2:
+
+DECLARE @max FLOAT;
+
+SELECT @max = MAX(LUONG)
+FROM NHANVIEN;
+
+SELECT @max;
+
+SELECT *
+FROM NHANVIEN
+WHERE LUONG = @max;
+
+-- Baif 3:
+SELECT *
+FROM NHANVIEN;
+DECLARE @avg FLOAT,
+        @maPHG INT;
+
+SELECT @avg = AVG(LUONG)
+FROM NHANVIEN;
+
+SELECT @avg;
+
+SELECT @maPHG = MAPHG
+FROM PHONGBAN
+WHERE TENPHG = N'Nghiên Cứu';
+
+SELECT HONV,
+       TENLOT,
+       TENNV
+FROM NHANVIEN
+WHERE PHG = @maPHG
+      AND LUONG > @avg;
+
+-- bai4:
+
+DECLARE @thongke TABLE
+(
+    MaPH INT,
+    LTB FLOAT,
+    Soluong INT
+);
+
+INSERT INTO @thongke
+SELECT PHG,
+       AVG(LUONG) AS Luong,
+       COUNT(MANV) AS MaNV
+FROM NHANVIEN
+GROUP BY PHG;
+
+SELECT b.*,
+       a.TENPHG
+FROM PHONGBAN a
+    INNER JOIN @thongke b
+        ON a.MAPHG = b.MaPH;
+
+
+-- bai5:
+
+SELECT *
+FROM DEAN;
+
+DECLARE @thogKe TABLE
+(
+    MaPH INT,
+    SoLuong INT
+);
+
+INSERT INTO @thogKe
+SELECT PHONG,
+       COUNT(MADA)
+FROM DEAN
+GROUP BY PHONG;
+
+SELECT *
+FROM @thogKe;
+
+SELECT a.TENPHG,
+       b.MaPH,
+       b.SoLuong
+FROM PHONGBAN a
+    INNER JOIN @thogKe b
+        ON a.MAPHG = b.MaPH;
+
+
+--liệt kê tên phòng ban và số lượng nhân viên của phòng ban đó.*/
+
+DECLARE @LTB FLOAT;
+SELECT @LTB = AVG(LUONG)
+FROM NHANVIEN;
+SELECT @LTB;
+
+SELECT TENPHG,
+       COUNT(MANV) AS SLNV
+FROM NHANVIEN
+    JOIN PHONGBAN
+        ON NHANVIEN.PHG = PHONGBAN.MAPHG
+WHERE @LTB > 30000
+GROUP BY TENPHG;
+
+/*4.Với mỗi phòng ban, cho biết tên phòng ban và số lượng đề 
+án mà phòng ban đó chủ trì*/
+DECLARE @SLDA INT;
+SELECT @SLDA = COUNT(MADA)
+FROM PHONGBAN
+    JOIN DEAN
+        ON PHONGBAN.MAPHG = DEAN.PHONG;
+SELECT @SLDA;
+
+SELECT TENPHG,
+       COUNT(@SLDA) AS SLDA
+FROM PHONGBAN
+    JOIN DEAN
+        ON PHONGBAN.MAPHG = DEAN.PHONG
+GROUP BY TENPHG;
+
+-- Biến bảng
+DECLARE @table TABLE
+(
+    TENPHG NVARCHAR(30),
+    SLNV INT
+);
+INSERT INTO @table
+SELECT TENPHG,
+       COUNT(MANV) AS SL
+FROM dbo.PHONGBAN
+    JOIN dbo.NHANVIEN
+        ON NHANVIEN.PHG = PHONGBAN.MAPHG
+WHERE 30000 <
+(
+    SELECT AVG(LUONG)FROM dbo.NHANVIEN
+)
+GROUP BY TENPHG;
+SELECT *
+FROM @table;
+
+--- UPDATE ,  DELETE
+DECLARE @CAU3 TABLE
+(
+    TENPHG NVARCHAR(30),
+    SLVN INT
+);
+INSERT INTO @CAU3
+SELECT TENPHG,
+       COUNT(MANV) AS SL
+FROM PHONGBAN
+    JOIN NHANVIEN
+        ON PHONGBAN.MAPHG = NHANVIEN.PHG
+WHERE 30000 <
+(
+    SELECT AVG(LUONG)FROM NHANVIEN
+)
+GROUP BY TENPHG;
+
+-- UPDATE
+UPDATE @CAU3
+SET TENPHG = N'NCKH'
+WHERE TENPHG = N'NGHIÊN CỨU';
+
+-- DELETE
+DELETE FROM @CAU3
+WHERE TENPHG LIKE N'QUẢN%';
+SELECT *
+FROM @CAU3;

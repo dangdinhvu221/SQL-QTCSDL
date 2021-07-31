@@ -1,0 +1,179 @@
+﻿IF OBJECT_ID('CHAO') IS NOT NULL
+	DROP PROCEDURE CHAO
+GO
+CREATE PROCEDURE CHAO
+	@TEN NVARCHAR(50)
+AS
+PRINT N'XIN CHÀO: ' + @TEN
+
+--- GỌI LẠI TÊN SP
+EXEC dbo.CHAO @TEN = N'ĐẶNG ĐÌNH VŨ' -- nvarchar(50)
+
+
+---- C3:
+IF OBJECT_ID('SPCHAN') IS NOT NULL
+	DROP PROCEDURE SPCHAN
+GO
+CREATE PROCEDURE SPCHAN
+	@N INT
+AS 
+DECLARE @A INT = 2, @SUM INT = 0
+WHILE (@A <= @N)
+BEGIN
+	SELECT @SUM += @A
+	SET @A += 2
+END
+PRINT N'TỔNG SỐ CHẴN: ' + CONVERT(VARCHAR, @SUM)
+--- GỌI SP
+EXEC dbo.SPCHAN @N = 10 -- int
+
+--- C4:
+IF OBJECT_ID('UCLN') IS NOT NULL
+	DROP PROCEDURE UCLN
+GO
+CREATE PROCEDURE UCLN
+	@A INT, @B INT
+AS
+BEGIN
+	WHILE(@A != @B)
+	IF(@A > @B)
+	SET @A -= @B
+	ELSE
+	SET @B -= @B
+	RETURN @A
+END
+DECLARE @C INT
+EXEC @C = dbo.UCLN @A = 90, -- int
+              @B = 20  -- int
+SELECT @C AS 'UCLN'
+
+--- C5:
+USE QLDA
+GO
+--
+IF OBJECT_ID('SPBAI2_1') IS NOT NULL
+	DROP PROCEDURE SPBAI2_1
+GO
+CREATE PROCEDURE SPBAI2_1
+	@MANV INT
+AS
+BEGIN
+	SELECT MANV FROM dbo.NHANVIEN
+	WHERE @MANV = MANV
+END
+-- GỌI
+EXEC dbo.SPBAI2_1 @MANV = 2 -- int
+
+--- C6:
+IF OBJECT_ID('SPBAI2_2') IS NOT NULL
+	DROP PROCEDURE SPBAI2_2
+GO
+CREATE PROCEDURE SPBAI2_2
+	@MADA INT
+AS
+BEGIN
+SELECT COUNT(MA_NVIEN) AS SLNV FROM dbo.PHANCONG
+WHERE MADA = @MADA
+END
+--- GOI SP
+EXEC dbo.SPBAI2_2 @MADA = 1 -- int
+
+--- C7:
+IF OBJECT_ID('SPBAI2_3') IS NOT NULL
+	DROP PROCEDURE SPBAI2_3
+GO
+CREATE PROCEDURE SPBAI2_3
+	@MADA INT, @DDIEM_DA NVARCHAR(50)
+AS
+BEGIN
+	SELECT COUNT(MA_NVIEN) AS SLNV FROM 
+	dbo.PHANCONG JOIN dbo.DEAN ON DEAN.MADA = PHANCONG.MADA
+	WHERE dbo.DEAN.MADA = @MADA AND DDIEM_DA = @DDIEM_DA
+END
+-- GOI
+EXEC dbo.SPBAI2_3 @MADA = 10,      -- int
+                  @DDIEM_DA = N'Hà nội' -- nvarchar(50)
+				  
+
+---C8:
+IF OBJECT_ID('SPBAI2_4') IS NOT NULL
+	DROP PROCEDURE SPBAI2_4
+GO
+CREATE PROCEDURE SPBAI2_4
+	@TRGPHG INT
+AS
+BEGIN
+SELECT *FROM dbo.NHANVIEN JOIN dbo.PHONGBAN
+	ON PHONGBAN.MAPHG = NHANVIEN.PHG
+	WHERE TRPHG = 5 AND MANV NOT IN(SELECT MA_NVIEN FROM dbo.THANNHAN)
+END
+
+
+---- C2:
+IF OBJECT_ID('SPBAI2_5') IS NOT NULL
+	DROP PROCEDURE SPBAI2_5
+GO
+CREATE PROCEDURE SPBAI2_5
+	@MANV INT, @MAPB INT
+AS
+BEGIN
+IF @MANV NOT IN (SELECT MANV FROM dbo.NHANVIEN WHERE PHG = @MAPB)
+	PRINT N'MANV: ' + CONVERT(VARCHAR, @MANV) +
+	N' KO THUỘC PHONG: ' + CONVERT(VARCHAR, @MAPB)
+ELSE
+	PRINT N'MANV: ' + CONVERT(VARCHAR, @MANV) +
+	N' THUỘC PHONG: ' + CONVERT(VARCHAR, @MAPB)
+END
+
+EXEC dbo.SPBAI2_5 @MANV = 4, -- int
+                  @MAPB = 5  -- 
+EXEC dbo.SPBAI2_5 @MANV = 4, -- int
+                  @MAPB = 1 -- int
+
+--//CHỮA BAI3.3 LAB 05
+/* Thêm một nhân viên vào bảng NhanVien, tất cả giá trị đều truyền 
+dưới dạng tham số đầu vào với điều kiện:
+o nhân viên này trực thuộc phòng IT
+o Nhận @luong làm tham số đầu vào cho cột Luong, nếu @luong<25000 thì
+NV này do NV có mã 009 quản lý, ngươc lại do NV có mã 005 quản lý
+o Nếu là NV nam thi NV phải nằm trong độ tuổi 18-65, nếu là NV nữ 
+thì độ tuổi phải từ 18-60.*/
+IF OBJECT_ID('SPBAI3_3') IS NOT NULL
+DROP PROC SPBAI3_3
+GO
+CREATE PROC SPBAI3_3
+@HONV NVARCHAR(15), @TENLOT NVARCHAR(15), @TENNV NVARCHAR(15),
+@MANV VARCHAR(9), @NGSINH DATETIME, @DCHI NVARCHAR(30),
+@PHAI NVARCHAR(5), @LUONG MONEY, @MA_NQL VARCHAR(9), @PHG INT
+AS
+DECLARE @TUOI INT = DATEDIFF(YEAR, @NGSINH, GETDATE())
+	IF(@PHG != (SELECT MAPHG FROM PHONGBAN WHERE TENPHG = 'IT'))
+	PRINT N'NHẬP SAI, NHẬP LẠI VÌ NHÂN VIÊN KHÔNG THUỘC PHÒNG IT'
+	ELSE IF @PHAI = 'NAM' AND (@TUOI < 18 OR @TUOI > 65)
+	PRINT N'NHÂN VIÊN NAM PHẢI TUỔI TỪ 18 ĐẾN 65'
+	ELSE IF @PHAI = N'NỮ' AND (@TUOI < 18 OR @TUOI > 60)
+	PRINT N'NHÂN VIÊN NỮ PHẢI TUỔI TỪ 18 ĐẾN 60'
+	ELSE
+	INSERT INTO NHANVIEN 
+	VALUES(@HONV, @TENLOT, @TENNV, @MANV, @NGSINH, @DCHI, @PHAI, @LUONG, 
+	IIF(@LUONG < 25000,'009','005'), @MA_NQL,@PHG)
+-----GỌI
+EXEC SPBAI3_3 'ABC','BCD','CXZ','000','1977-10-10','HN','NAM',30000,NULL,6
+SELECT*FROM dbo.NHANVIEN
+DELETE FROM dbo.NHANVIEN WHERE MANV ='00%'
+
+--Bài 2 :  Sử dụng biến vô hướng:
+	DECLARE @a int , @b int ,@uc int, @bc int; 
+select @a = 12
+select @b = 5
+select @bc = @a * @b
+while(@a != @b)
+begin
+if(@a > @b) select @a = @a - @b;
+else select @b = @b - @a;
+end;
+select @uc = @a;
+select @bc = @bc/@uc;
+print N'Ước chung nhỏ nhất là: ' +  CAST(@uc as varchar(10));
+print N'Bội chung nhỏ nhất là: ' +  CAST(@bc as varchar(10));
+

@@ -1,0 +1,90 @@
+﻿USE QLDA;
+GO
+
+
+-- c1:
+DECLARE @TSPB VARCHAR(15);
+SELECT @TSPB = SUM(MAPHG)
+FROM dbo.PHONGBAN;
+
+SELECT @TSPB AS TongSPB,
+       CAST(@TSPB AS INT) AS CAS,
+       CONVERT(INT, @TSPB) AS CONVR;
+SELECT @TSPB = SUM(MAPHG)
+FROM dbo.PHONGBAN;
+
+-- c2:
+DECLARE @ThongTin TABLE
+(
+    MANV VARCHAR(15) NOT NULL,
+    TONGTG INT
+);
+
+INSERT INTO @ThongTin
+SELECT MANV,
+       SUM(THOIGIAN)
+FROM dbo.NHANVIEN
+    JOIN dbo.PHANCONG
+        ON PHANCONG.MA_NVIEN = NHANVIEN.MANV
+GROUP BY MANV;
+SELECT *
+FROM @ThongTin;
+
+SELECT A.MANV,
+       UPPER(LEFT(B.TENNV, 1)) + SUBSTRING(B.TENNV, 2, LEN(B.TENNV)) AS TENNV,
+       CONVERT(VARCHAR, B.NGSINH, 103) AS NGSINH,
+       DATEDIFF(YEAR, B.NGSINH, GETDATE()) AS TUOI,
+       A.TONGTG
+FROM @ThongTin A
+    JOIN dbo.NHANVIEN B
+        ON B.MANV = A.MANV;
+
+-- C3:
+DECLARE @NhanVien TABLE
+(
+    MaNV VARCHAR(15) NOT NULL,
+    TenNV NVARCHAR(20) NOT NULL
+);
+
+INSERT INTO @NhanVien
+SELECT MANV,
+       TENNV
+FROM dbo.NHANVIEN;
+
+SELECT a.MaNV,
+       a.TenNV
+FROM @NhanVien a
+    JOIN dbo.NHANVIEN b
+        ON b.MANV = a.MaNV
+WHERE a.TenNV LIKE N'T%';
+
+---truy vấn dữ liệu @NhanVien
+SELECT a.MaNV,
+       a.TenNV
+FROM @NhanVien a
+    JOIN dbo.NHANVIEN b
+        ON b.MANV = a.MaNV;
+
+--- update
+UPDATE @NhanVien
+SET TenNV = N'Vũ-dev'
+WHERE MaNV = '001';
+SELECT *
+FROM @NhanVien;
+
+---delete
+DELETE FROM @NhanVien
+WHERE MaNV = '001';
+SELECT *
+FROM @NhanVien;
+
+--- insert
+INSERT @NhanVien
+(
+    MaNV,
+    TenNV
+)
+VALUES
+('022NEW', N'Vũ-dev');
+SELECT *
+FROM @NhanVien;
